@@ -15,15 +15,18 @@ void call(MyInterface *p) {
 
 int main(int argc, char ** argv)
 {
+   std::string A("A");
+   std::string B("B");
+
    std::cout << "Looking for classes..." << std::endl;
-   std::auto_ptr<MyInterface> c1a( CALL1(MyInterface*, Class1, std::string("c1a")) );
-   std::auto_ptr<MyInterface> c2a( CALL1(MyInterface*, Class2, std::string("c2a")) );
+   std::auto_ptr<MyInterface> c1a( CALL2(MyInterface*, Class1, std::string("c1a"), &A) );
+   std::auto_ptr<MyInterface> c2a( CALL2(MyInterface*, Class2, std::string("c2a"), &B) );
    call(c1a.get());
    call(c2a.get());
 
    std::cout << "Looking for IDs..." << std::endl;
-   std::auto_ptr<MyInterface> c1b( CALL1(MyInterface*, 1, std::string("c1b")) );
-   std::auto_ptr<MyInterface> c2b( CALL1(MyInterface*, 2, std::string("c2b")) );
+   std::auto_ptr<MyInterface> c1b( CALL2(MyInterface*, 1, std::string("c1b"), &B) );
+   std::auto_ptr<MyInterface> c2b( CALL2(MyInterface*, 2, std::string("c2b"), &A) );
    call(c1b.get());
    call(c2b.get());
    std::cout << "Done!" << std::endl;

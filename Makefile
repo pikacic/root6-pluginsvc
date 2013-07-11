@@ -50,13 +50,13 @@ $(MAIN): $(TESTMACROSO) $(MAINO)
 
 ###############################################################################
 
-testMacroDict.$(SrcSuf): testMacro.h LinkDef.h
+testMacroDict.$(SrcSuf): testMacro.cxx LinkDef.h
 		@echo "Generating dictionary $@..."
-		@rootcint -f $@ -c $^
+		rootcint -f $@ -c $^
 
-$(TESTMACROMAP): testMacro.h LinkDef.h
+$(TESTMACROMAP): testMacro.cxx LinkDef.h
 		@echo "Generating rootmap file $@..."
-		@rlibmap -o $@ -l $(TESTMACROSO) -c $^
+		rlibmap -o $@ -l $(TESTMACROSO) -c $^
 
 clean:
 		rm -f *.o *.obj *.res *.pdb *.def *.exp \
