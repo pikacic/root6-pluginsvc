@@ -1,3 +1,5 @@
+// cl -nologo -Z7 -MDd -GR -EHsc testLoading.cxx -I %ROOTSYS%\include /link -debug -LIBPATH:%ROOTSYS%\lib libCore.lib
+
 #include "TROOT.h"
 #include "Riostream.h"
 #include "TH1.h"
@@ -11,19 +13,18 @@ void call(MyInterface *p) {
    if (p) p->theMethod();
 }
 
-void testLoading()
+int main(int argc, char ** argv)
 {
+   std::cout << "Looking for classes..." << std::endl;
    std::auto_ptr<MyInterface> c1a( CALL1(MyInterface*, Class1, std::string("c1a")) );
    std::auto_ptr<MyInterface> c2a( CALL1(MyInterface*, Class2, std::string("c2a")) );
    call(c1a.get());
    call(c2a.get());
 
+   std::cout << "Looking for IDs..." << std::endl;
    std::auto_ptr<MyInterface> c1b( CALL1(MyInterface*, 1, std::string("c1b")) );
    std::auto_ptr<MyInterface> c2b( CALL1(MyInterface*, 2, std::string("c2b")) );
    call(c1b.get());
    call(c2b.get());
-
-   // example with the TH1F class
-   //std::auto_ptr<TH1> h1( CALL5(TH1*, TH1F, (const char*)"h1", (const char*)"example title", 100, 0.0, 0.0) );
-   //h1.get()->Print();
+   std::cout << "Done!" << std::endl;
 }

@@ -1,6 +1,37 @@
 #ifndef _PLUGIN_FACTORY_H_
 #define _PLUGIN_FACTORY_H_
 
+#ifdef __MAKECINT__
+#define _PLUGINSVC_FACTORY_WITH_ID1(type, id, ret, arg1) \
+   namespace __pf__ { \
+      ret Create##id(arg1 A); \
+   }
+#define _PLUGINSVC_FACTORY_WITH_ID2(type, id, ret, arg1, arg2) \
+   namespace __pf__ { \
+      ret Create##id(arg1 A, arg2 B); \
+      } \
+   }
+#define _PLUGINSVC_FACTORY_WITH_ID3(type, id, ret, arg1, arg2, arg3) \
+   namespace __pf__ { \
+      ret Create##id(arg1 A, arg2 B, arg3 C); \
+      } \
+   }
+#define _PLUGINSVC_FACTORY_WITH_ID4(type, id, ret, arg1, arg2, arg3, arg4) \
+   namespace __pf__ { \
+      ret Create##id(arg1 A, arg2 B, arg3 C, arg4 D); \
+      } \
+   }
+#define _PLUGINSVC_FACTORY_WITH_ID4(type, id, ret, arg1, arg2, arg3, arg4) \
+   namespace __pf__ { \
+      ret Create##id(arg1 A, arg2 B, arg3 C, arg4 D); \
+      } \
+   }
+#define _PLUGINSVC_FACTORY_WITH_ID5(type, id, ret, arg1, arg2, arg3, arg4, arg5) \
+   namespace __pf__ { \
+      ret Create##id(arg1 A, arg2 B, arg3 C, arg4 D, arg5 E); \
+      } \
+   }
+#else // __MAKECINT__
 #define _PLUGINSVC_FACTORY_WITH_ID1(type, id, ret, arg1) \
    namespace __pf__ { \
       ret Create##id(arg1 A) { \
@@ -37,6 +68,8 @@
          return (ret) new type(A, B, C, D, E); \
       } \
    }
+#endif // __MAKECINT__
+
 #define _PLUGINSVC_FACTORY1(type, ret, arg1) \
    _PLUGINSVC_FACTORY_WITH_ID1(type, type, ret, arg1)
 #define _PLUGINSVC_FACTORY2(type, ret, arg1, arg2) \
