@@ -1,13 +1,17 @@
 ###############################################################################
 
+ifeq ($(ROOTSYS),)
+include /etc/root/Makefile.arch
+else
 include $(ROOTSYS)/etc/Makefile.arch
+endif
 
 ###############################################################################
 
 ###############################################################################
 
-TESTMACROO    := testMacro.$(ObjSuf) testMacroDict.$(ObjSuf)
-TESTMACROS    := testMacro.$(SrcSuf) testMacroDict.$(SrcSuf)
+TESTMACROO    := testMacro.$(ObjSuf) testMacroDict.$(ObjSuf) PluginService.$(ObjSuf)
+TESTMACROS    := testMacro.$(SrcSuf) testMacroDict.$(SrcSuf) PluginService.$(SrcSuf)
 TESTMACROSO   := libTestMacro.$(DllSuf)
 MAIN          := testLoading$(ExeSuf)
 ifeq ($(PLATFORM),win32)
@@ -17,8 +21,8 @@ TESTMACROLIB  := $(TESTMACROSO)
 endif
 TESTMACROMAP  := testMacro.rootmap
 
-MAINO          = testLoading.$(ObjSuf)
-MAINS          = testLoading.$(SrcSuf)
+MAINO          = testLoading.$(ObjSuf) PluginService.$(ObjSuf)
+MAINS          = testLoading.$(SrcSuf) PluginService.$(SrcSuf)
 
 OBJS           = $(TESTMACROO) $(MAINO)
 

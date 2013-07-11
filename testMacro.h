@@ -3,7 +3,7 @@
 
 #include "Riostream.h"
 #include "Interfaces.h"
-#include "PluginFactory.h"
+#include "PluginService.h"
 
 class Class1: public MyInterface {
 public:

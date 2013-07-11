@@ -46,9 +46,24 @@
 #define _PLUGINSVC_FACTORY2(type, ret, arg1, arg2) \
    _PLUGINSVC_FACTORY_WITH_ID2(type, type, ret, arg1, arg2)
 
-#define CALL1(A, B, ArgVal1) \
-   (A)gROOT->ProcessLine(TString::Format("__pf__::Create%s::call(%s);", #B, #ArgVal1))
-#define CALL2(A, B, ArgVal1, ArgVal2) \
-   (A)gROOT->ProcessLine(TString::Format("__pf__::Create%s::call(%s, %s);", #B, #ArgVal1, #ArgVal2))
+#include <string>
+
+namespace PluginService {
+  void* getFactory(const std::string& id);
+
+    template <class R, class A1>
+    R make(const std::string id, A1 a1) {
+      typedef R (*factory_t)(A1);
+      factory_t f = (factory_t)getFactory(id);
+      return (*f)(a1);
+    }
+
+    template <class R, class A1, class A2>
+    R make(const std::string id, A1 a1, A2 a2) {
+      typedef R (*factory_t)(A1, A2);
+      factory_t f = (factory_t)getFactory(id);
+      return (*f)(a1, a2);
+    }
+}
 
 #endif //_PLUGIN_FACTORY_H
