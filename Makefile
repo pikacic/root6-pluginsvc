@@ -10,8 +10,8 @@ endif
 
 ###############################################################################
 
-TESTMACROO    := testMacro.$(ObjSuf) testMacroDict.$(ObjSuf) PluginService.$(ObjSuf)
-TESTMACROS    := testMacro.$(SrcSuf) testMacroDict.$(SrcSuf) PluginService.$(SrcSuf)
+TESTMACROO    := testMacro.$(ObjSuf) testMacroFactories.$(ObjSuf) PluginService.$(ObjSuf)
+TESTMACROS    := testMacro.$(SrcSuf) testMacroFactories.$(SrcSuf) PluginService.$(SrcSuf)
 TESTMACROSO   := libTestMacro.$(DllSuf)
 MAIN          := testLoading$(ExeSuf)
 ifeq ($(PLATFORM),win32)
@@ -20,6 +20,8 @@ else
 TESTMACROLIB  := $(TESTMACROSO)
 endif
 TESTMACROMAP  := testMacro.rootmap
+
+EXTRALIBS     := -lReflex -lCintex
 
 MAINO          = testLoading.$(ObjSuf) PluginService.$(ObjSuf)
 MAINS          = testLoading.$(SrcSuf) PluginService.$(SrcSuf)
@@ -48,26 +50,26 @@ endif
 	@echo "$@ done"
 
 $(MAIN): $(TESTMACROSO) $(MAINO)
-	$(LD) $(LDFLAGS) $(MAINO) $(ROOTLIBS) $(OutPutOpt)$@
+	$(LD) $(LDFLAGS) $(MAINO) $(ROOTLIBS) $(EXTRALIBS) $(OutPutOpt)$@
 	$(MT_EXE)
 	@echo "$@ done"
 
 ###############################################################################
 
-testMacroDict.$(SrcSuf): testMacro.cxx LinkDef.h
+testMacroFactories.$(SrcSuf) $(TESTMACROMAP): testMacro.cxx
 		@echo "Generating dictionary $@..."
-		rootcint -f $@ -c $^
-
-$(TESTMACROMAP): testMacro.cxx LinkDef.h
-		@echo "Generating rootmap file $@..."
-		rlibmap -o $@ -l $(TESTMACROSO) -c $^
+		$(RM) $(TESTMACROMAP)
+		genreflex $^ --output testMacroFactories.$(SrcSuf) \
+		  --selection_file PluginService.xml \
+		  --interpreteronly --no_membertypedefs \
+		  --rootmap $(TESTMACROMAP) --rootmap-lib $(TESTMACROSO)
 
 clean:
 		rm -f *.o *.obj *.res *.pdb *.def *.exp \
-		      *.lib *.ilk *.manifest *.d *.def *Dict.*
+		      *.lib *.ilk *.manifest *.d *.def *Factories.* \
+		      $(PROGRAMS) $(TESTMACROSO) $(TESTMACROMAP)
 
 distclean:  clean
-		@rm -f $(PROGRAMS) $(TESTMACROSO) $(TESTMACROMAP)
 
 ###############################################################################
 

@@ -2,6 +2,17 @@
 
 #include "TROOT.h"
 
+#include "Cintex/Cintex.h"
+
+namespace {
+  class CintexEnabler {
+  public:
+    CintexEnabler() {
+      ROOT::Cintex::Cintex::Enable();
+    }
+  } _enabler;
+}
+
 namespace PluginService {
   namespace Details {
     void* getCreator(const std::string& id) {
