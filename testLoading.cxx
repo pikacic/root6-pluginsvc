@@ -34,5 +34,11 @@ int main(int argc, char ** argv)
    call(c1b.get());
    call(c2b.get());
 
+   try {
+     myCreate("3", "c1b", &B);
+   } catch (PluginService::Exception &e) {
+     std::cout << "PluginService::Exception -> " << e.what() << std::endl;
+   }
+
    std::cout << "Done!" << std::endl;
 }

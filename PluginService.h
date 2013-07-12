@@ -46,6 +46,15 @@ namespace PluginService {
     typedef R (*FuncType)(Arg1Type, Arg2Type);
   };
 
+  class Exception: public std::exception {
+  public:
+    Exception(const std::string& msg);
+    virtual ~Exception() throw();
+    virtual const char* what() const throw();
+  private:
+    std::string m_msg;
+  };
+
   namespace Details {
     /// Class providing default factory functions.
     ///
