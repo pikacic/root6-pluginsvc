@@ -14,7 +14,7 @@ void call(MyInterface *p) {
 }
 
 MyInterface* myCreate(const std::string& id, std::string name, std::string* shared) {
-  return PluginService::make<MyInterface*, std::string, std::string*>(id, name, shared);
+  return PluginService::Factory::create<MyFactorySignature>(id, name, shared);
 }
 
 int main(int argc, char ** argv)

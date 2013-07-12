@@ -1,9 +1,10 @@
 #ifndef _TESTMACRO_H_
 #define _TESTMACRO_H_
 
-#include "Riostream.h"
 #include "Interfaces.h"
 #include "PluginService.h"
+
+#include <iostream>
 
 class Class1: public MyInterface {
 public:
