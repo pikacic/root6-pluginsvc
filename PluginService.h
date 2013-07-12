@@ -2,19 +2,27 @@
 #define _PLUGIN_SERVICE_H_
 
 #include <string>
+#include <map>
 
-#define DECLARE_FACTORY_WITH_ID(type, id, signature) \
-  namespace __pf__ { \
-    class Create##id { \
+#define PLUGINSVC_CNAME(name, serial) _register_ ## name ## _ ## serial
+
+#define DECLARE_FACTORY_WITH_ID(type, id, factory) _DECLARE_FACTORY_INTERNAL(type, id, factory, __LINE__)
+
+#define _DECLARE_FACTORY_INTERNAL(type, id, factory, serial) \
+  namespace { \
+    class PLUGINSVC_CNAME(type, serial) { \
     public: \
-      typedef signature s_t; \
+      typedef factory s_t; \
       typedef PluginService::Details::Factory<type> f_t; \
       static s_t::FuncType creator() { return &f_t::create<s_t>; } \
-    }; \
+      PLUGINSVC_CNAME(type, serial) () { \
+        PluginService::Registry::instance().add(id, (void*)creator()); \
+      } \
+    } PLUGINSVC_CNAME(s_ ## type, serial); \
   }
 
-#define DECLARE_FACTORY(type, signature) \
-  DECLARE_FACTORY_WITH_ID(type, type, signature)
+#define DECLARE_FACTORY(type, factory) \
+  DECLARE_FACTORY_WITH_ID(type, #type, factory)
 
 
 namespace PluginService {
@@ -102,6 +110,21 @@ namespace PluginService {
     std::string m_msg;
   };
 
+  class Registry {
+  public:
+    typedef std::map<std::string, void*> FactoryMap;
+
+    static Registry& instance();
+
+    void add(const std::string& id, void *factory);
+
+    void* get(const std::string& id);
+
+  private:
+    Registry() {}
+
+    FactoryMap m_map;
+  };
 }
 
 #endif //_PLUGIN_FACTORY_H

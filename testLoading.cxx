@@ -1,9 +1,8 @@
 // cl -nologo -Z7 -MDd -GR -EHsc testLoading.cxx -I %ROOTSYS%\include /link -debug -LIBPATH:%ROOTSYS%\lib libCore.lib
 
-#include "TROOT.h"
-#include "Riostream.h"
-#include "TH1.h"
 #include <memory>
+#include <iostream>
+#include <dlfcn.h>
 
 #include "PluginService.h"
 #include "Interfaces.h"
@@ -15,26 +14,28 @@ void call(MyInterface *p) {
 
 int main(int argc, char ** argv)
 {
-   std::string A("A");
-   std::string B("B");
+  dlopen("libComponent.so", RTLD_LAZY);
 
-   std::cout << "Looking for classes..." << std::endl;
-   std::auto_ptr<MyInterface> c1a( MyFactory::create("Class1", "c1a", &A) );
-   std::auto_ptr<MyInterface> c2a( MyFactory::create("Class2", "c2a", &B) );
-   call(c1a.get());
-   call(c2a.get());
+  std::string A("A");
+  std::string B("B");
 
-   std::cout << "Looking for IDs..." << std::endl;
-   std::auto_ptr<MyInterface> c1b( MyFactory::create("1", "c1b", &B) );
-   std::auto_ptr<MyInterface> c2b( MyFactory::create("2", "c2b", &A) );
-   call(c1b.get());
-   call(c2b.get());
+  std::cout << "Looking for classes..." << std::endl;
+  std::auto_ptr<MyInterface> c1a( MyFactory::create("Class1", "c1a", &A) );
+  std::auto_ptr<MyInterface> c2a( MyFactory::create("Class2", "c2a", &B) );
+  call(c1a.get());
+  call(c2a.get());
 
-   try {
-     MyFactory::create("3", "c1b", &B);
-   } catch (PluginService::Exception &e) {
-     std::cout << "PluginService::Exception -> " << e.what() << std::endl;
-   }
+  std::cout << "Looking for IDs..." << std::endl;
+  std::auto_ptr<MyInterface> c1b( MyFactory::create("1", "c1b", &B) );
+  std::auto_ptr<MyInterface> c2b( MyFactory::create("2", "c2b", &A) );
+  call(c1b.get());
+  call(c2b.get());
 
-   std::cout << "Done!" << std::endl;
+  try {
+    MyFactory::create("3", "c1b", &B);
+  } catch (PluginService::Exception &e) {
+    std::cout << "PluginService::Exception -> " << e.what() << std::endl;
+  }
+
+  std::cout << "Done!" << std::endl;
 }

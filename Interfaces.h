@@ -18,7 +18,7 @@ typedef PluginService::Factory2<MyInterface*,
 
 #define DECLARE_MY_FACTORY(type) \
   DECLARE_FACTORY(type, MyFactory)
-#define DECLARE_MY_FACTORY_WITH_ID(id, type) \
+#define DECLARE_MY_FACTORY_WITH_ID(type, id) \
   DECLARE_FACTORY_WITH_ID(type, id, MyFactory)
 
 #endif
