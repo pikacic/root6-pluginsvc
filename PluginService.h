@@ -3,7 +3,7 @@
 
 #include <string>
 
-#define DECLARE_FACTORY_WITH_ID(id, type, signature) \
+#define DECLARE_FACTORY_WITH_ID(type, id, signature) \
   namespace __pf__ { \
     class Create##id { \
     public: \
@@ -18,42 +18,6 @@
 
 
 namespace PluginService {
-
-  /// Class wrapping the signature for a factory without arguments.
-  template <typename R>
-  class FactorySignature0 {
-  public:
-    typedef R  ReturnType;
-    typedef R (*FuncType)();
-  };
-
-  /// Class wrapping the signature for a factory with 1 argument.
-  template <typename R, typename A1>
-  class FactorySignature1 {
-  public:
-    typedef R  ReturnType;
-    typedef A1 Arg1Type;
-    typedef R (*FuncType)(Arg1Type);
-  };
-
-  /// Class wrapping the signature for a factory with 2 arguments.
-  template <typename R, typename A1, typename A2>
-  class FactorySignature2 {
-  public:
-    typedef R  ReturnType;
-    typedef A1 Arg1Type;
-    typedef A2 Arg2Type;
-    typedef R (*FuncType)(Arg1Type, Arg2Type);
-  };
-
-  class Exception: public std::exception {
-  public:
-    Exception(const std::string& msg);
-    virtual ~Exception() throw();
-    virtual const char* what() const throw();
-  private:
-    std::string m_msg;
-  };
 
   namespace Details {
     /// Class providing default factory functions.
@@ -87,37 +51,55 @@ namespace PluginService {
     void* getCreator(const std::string& id);
   }
 
-  /// Entry point to the factories.
-  ///
-  /// Example:,
-  /// @code{
-  ///
-  ///   typedef PluginService::FactorySignature1<Interface*, std::string>
-  ///           MySignature;
-  ///   PluginSvc::Factory::create<MySignature>("factory_id")("argument");
-  ///
-  /// @}
-  class Factory {
+  /// Class wrapping the signature for a factory without arguments.
+  template <typename R>
+  class Factory0 {
   public:
+    typedef R  ReturnType;
+    typedef R (*FuncType)();
 
-    template <typename S>
-    static typename S::ReturnType create(const std::string& id) {
-      return (*(typename S::FuncType)Details::getCreator(id))();
+    static ReturnType create(const std::string& id) {
+      return (*(FuncType)Details::getCreator(id))();
     }
+  };
 
-    template <typename S>
-    static typename S::ReturnType create(const std::string& id,
-                                         typename S::Arg1Type a1) {
-      return (*(typename S::FuncType)Details::getCreator(id))(a1);
+  /// Class wrapping the signature for a factory with 1 argument.
+  template <typename R, typename A1>
+  class Factory1 {
+  public:
+    typedef R  ReturnType;
+    typedef A1 Arg1Type;
+    typedef R (*FuncType)(Arg1Type);
+
+    static ReturnType create(const std::string& id,
+                             Arg1Type a1) {
+      return (*(FuncType)Details::getCreator(id))(a1);
     }
+  };
 
-    template <typename S>
-    static typename S::ReturnType create(const std::string& id,
-                                         typename S::Arg1Type a1,
-                                         typename S::Arg2Type a2) {
-      return (*(typename S::FuncType)Details::getCreator(id))(a1, a2);
+  /// Class wrapping the signature for a factory with 2 arguments.
+  template <typename R, typename A1, typename A2>
+  class Factory2 {
+  public:
+    typedef R  ReturnType;
+    typedef A1 Arg1Type;
+    typedef A2 Arg2Type;
+    typedef R (*FuncType)(Arg1Type, Arg2Type);
+
+    static ReturnType create(const std::string& id,
+                             Arg1Type a1,
+                             Arg2Type a2) {
+      return (*(FuncType)Details::getCreator(id))(a1, a2);
     }
+  };
 
+  class Exception: public std::exception {
+  public:
+    Exception(const std::string& msg);
+    virtual ~Exception() throw();
+    virtual const char* what() const throw();
+  private:
+    std::string m_msg;
   };
 
 }

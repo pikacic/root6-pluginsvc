@@ -13,29 +13,25 @@ void call(MyInterface *p) {
    if (p) p->theMethod();
 }
 
-MyInterface* myCreate(const std::string& id, std::string name, std::string* shared) {
-  return PluginService::Factory::create<MyFactorySignature>(id, name, shared);
-}
-
 int main(int argc, char ** argv)
 {
    std::string A("A");
    std::string B("B");
 
    std::cout << "Looking for classes..." << std::endl;
-   std::auto_ptr<MyInterface> c1a( myCreate("Class1", "c1a", &A) );
-   std::auto_ptr<MyInterface> c2a( myCreate("Class2", "c2a", &B) );
+   std::auto_ptr<MyInterface> c1a( MyFactory::create("Class1", "c1a", &A) );
+   std::auto_ptr<MyInterface> c2a( MyFactory::create("Class2", "c2a", &B) );
    call(c1a.get());
    call(c2a.get());
 
    std::cout << "Looking for IDs..." << std::endl;
-   std::auto_ptr<MyInterface> c1b( myCreate("1", "c1b", &B) );
-   std::auto_ptr<MyInterface> c2b( myCreate("2", "c2b", &A) );
+   std::auto_ptr<MyInterface> c1b( MyFactory::create("1", "c1b", &B) );
+   std::auto_ptr<MyInterface> c2b( MyFactory::create("2", "c2b", &A) );
    call(c1b.get());
    call(c2b.get());
 
    try {
-     myCreate("3", "c1b", &B);
+     MyFactory::create("3", "c1b", &B);
    } catch (PluginService::Exception &e) {
      std::cout << "PluginService::Exception -> " << e.what() << std::endl;
    }
