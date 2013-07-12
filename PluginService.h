@@ -46,7 +46,6 @@ namespace PluginService {
     typedef R (*FuncType)(Arg1Type, Arg2Type);
   };
 
-  /// Internal na
   namespace Details {
     /// Class providing default factory functions.
     ///
