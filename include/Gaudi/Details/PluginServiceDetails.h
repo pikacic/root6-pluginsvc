@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 
 namespace Gaudi { namespace PluginService {
 
@@ -40,18 +41,33 @@ namespace Gaudi { namespace PluginService {
     /// In-memory database of the loaded factories.
     class Registry {
     public:
+      /// Type used for the database implementation.
       typedef std::map<std::string, void*> FactoryMap;
 
+      /// Retrieve the singleton instance of Registry.
       static Registry& instance();
 
+      /// Add a factory to the database.
       void add(const std::string& id, void *factory);
 
-      void* get(const std::string& id);
+      /// Retrieve the factory for the given id.
+      void* get(const std::string& id) const;
 
     private:
+      /// Private constructor for the singleton pattern.
       Registry() {}
 
+      /// Find the library providing a given factory and returns it's name.
+      std::string locate(const std::string& id) const;
+
+      /// Internal storage for factories.
       FactoryMap m_map;
+
+      /// List of libraries already loaded.
+      /// Needed to avoid infinite loops if a library declares to have a factory
+      /// but it is not true.
+      std::set<std::string> m_loadedLibs;
+
     };
   }
 }}

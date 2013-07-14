@@ -1,8 +1,5 @@
-// cl -nologo -Z7 -MDd -GR -EHsc testLoading.cxx -I %ROOTSYS%\include /link -debug -LIBPATH:%ROOTSYS%\lib libCore.lib
-
 #include <memory>
 #include <iostream>
-#include <dlfcn.h>
 
 #include <Gaudi/PluginService.h>
 #include "Interfaces.h"
@@ -14,7 +11,6 @@ void call(MyInterface *p) {
 
 int main(int argc, char ** argv)
 {
-  dlopen("libComponent.so", RTLD_LAZY);
 
   std::string A("A");
   std::string B("B");
