@@ -4,7 +4,7 @@
 #include <iostream>
 #include <dlfcn.h>
 
-#include "PluginService.h"
+#include <Gaudi/PluginService.h>
 #include "Interfaces.h"
 
 void call(MyInterface *p) {
@@ -33,7 +33,7 @@ int main(int argc, char ** argv)
 
   try {
     MyFactory::create("3", "c1b", &B);
-  } catch (PluginService::Exception &e) {
+  } catch (Gaudi::PluginService::Exception &e) {
     std::cout << "PluginService::Exception -> " << e.what() << std::endl;
   }
 

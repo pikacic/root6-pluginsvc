@@ -9,11 +9,11 @@ public:
    virtual void theMethod() const = 0;
 };
 
-#include "PluginService.h"
+#include <Gaudi/PluginService.h>
 #include <string>
 
-typedef PluginService::Factory2<MyInterface*,
-                                const std::string&, std::string*>
+typedef Gaudi::PluginService::Factory2<MyInterface*,
+                                       const std::string&, std::string*>
         MyFactory;
 
 #define DECLARE_MY_FACTORY(type) \

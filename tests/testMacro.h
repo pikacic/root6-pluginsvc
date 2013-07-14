@@ -2,8 +2,6 @@
 #define _TESTMACRO_H_
 
 #include "Interfaces.h"
-#include "PluginService.h"
-
 #include <iostream>
 
 class Class1: public MyInterface {

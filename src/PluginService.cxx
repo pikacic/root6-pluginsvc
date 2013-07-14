@@ -1,6 +1,6 @@
-#include "PluginService.h"
+#include <Gaudi/PluginService.h>
 
-namespace PluginService {
+namespace Gaudi { namespace PluginService {
 
   Exception::Exception(const std::string& msg): m_msg(msg) {}
   Exception::~Exception() throw() {}
@@ -15,18 +15,18 @@ namespace PluginService {
         throw Exception(std::string("cannot find factory ") + id);
       return ptr;
     }
-  }
 
-  Registry& Registry::instance() {
-    static Registry r;
-    return r;
-  }
+    Registry& Registry::instance() {
+      static Registry r;
+      return r;
+    }
 
-  void Registry::add(const std::string& id, void *factory){
-    m_map[id] = factory;
-  }
+    void Registry::add(const std::string& id, void *factory){
+      m_map[id] = factory;
+    }
 
-  void* Registry::get(const std::string& id) {
-    return m_map[id];
+    void* Registry::get(const std::string& id) {
+      return m_map[id];
+    }
   }
-}
+}}
