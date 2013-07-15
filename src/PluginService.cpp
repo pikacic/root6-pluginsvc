@@ -1,6 +1,18 @@
 #include <Gaudi/PluginService.h>
 
 #include <dlfcn.h>
+#include <dirent.h>
+
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+
+#ifdef NDEBUG
+#define DEBUGMSG(x)
+#else
+#define DEBUGSTRM std::cerr << "PluginService:DEBUG: "
+#define DEBUGMSG(x) DEBUGSTRM << x << std::endl;
+#endif
 
 namespace Gaudi { namespace PluginService {
 
@@ -24,12 +36,76 @@ namespace Gaudi { namespace PluginService {
     }
 
     Registry::Registry() {
+      /*
 #warning "fake implementation for testing"
       FactoryInfo fi("libComponent.so");
       m_factories.insert(std::make_pair(std::string("Class1"), fi));
       m_factories.insert(std::make_pair(std::string("Class2"), fi));
       m_factories.insert(std::make_pair(std::string("1"), fi));
       m_factories.insert(std::make_pair(std::string("2"), fi));
+      */
+#ifdef WIN32
+      const char* envVar = "PATH";
+      const char sep = ';';
+#else
+      const char* envVar = "LD_LIBRARY_PATH";
+      const char sep = ':';
+#endif
+      char *search_path = ::getenv(envVar);
+      if (search_path) {
+        DEBUGMSG((std::string("searching factories in ") + envVar))
+        std::string path(search_path);
+        std::string::size_type pos = 0;
+        std::string::size_type newpos = 0;
+        while (pos != std::string::npos) {
+          std::string dirName;
+          // get the next entry in the path
+          newpos = path.find(sep, pos);
+          if (newpos != std::string::npos) {
+            dirName = path.substr(pos, newpos - pos);
+            pos = newpos+1;
+          } else {
+            dirName = path.substr(pos);
+            pos = newpos;
+          }
+          DEBUGMSG((std::string(" looking into ") + dirName))
+          // look for files called "*.factories" in the directory
+          DIR *dir = opendir(dirName.c_str());
+          if (dir) {
+            struct dirent * entry;
+            while ((entry = readdir(dir))) {
+              std::string name(entry->d_name);
+              std::string::size_type extpos = name.find(".components");
+
+              if ((extpos != std::string::npos) &&
+                  ((extpos+11) == name.size()) &&
+                  ((entry->d_type == DT_REG) || (entry->d_type == DT_LNK))) {
+                DEBUGMSG((std::string("  reading ") + name))
+                std::ifstream factories((dirName + '/' + name).c_str());
+                std::string lib, fact;
+#ifndef NDEBUG
+                int factoriesCount = 0;
+#endif
+                while (!factories.eof()) {
+                  std::getline(factories, lib, ':');
+                  if (factories.fail()) break;
+                  std::getline(factories, fact);
+                  if (factories.fail()) break;
+                  m_factories.insert(std::make_pair(fact, FactoryInfo(lib)));
+#ifndef NDEBUG
+                  ++factoriesCount;
+#endif
+                }
+#ifndef NDEBUG
+                DEBUGSTRM << "  found " << factoriesCount\
+                          << " factories" << std::endl;
+#endif
+              }
+            }
+            closedir(dir);
+          }
+        }
+      }
     }
 
     void Registry::add(const std::string& id, void *factory){

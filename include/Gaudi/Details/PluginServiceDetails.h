@@ -68,7 +68,7 @@ namespace Gaudi { namespace PluginService {
       /// Private constructor for the singleton pattern.
       /// At construction time, the internal database of known factories is
       /// filled with the name of the libraries containing them, using the
-      /// ".factorylist" files in the LD_LIBRARY_PATH.
+      /// ".components" files in the LD_LIBRARY_PATH.
       Registry();
 
       /// Private copy constructor for the singleton pattern.
