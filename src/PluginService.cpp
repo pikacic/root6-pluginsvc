@@ -36,14 +36,6 @@ namespace Gaudi { namespace PluginService {
     }
 
     Registry::Registry() {
-      /*
-#warning "fake implementation for testing"
-      FactoryInfo fi("libComponent.so");
-      m_factories.insert(std::make_pair(std::string("Class1"), fi));
-      m_factories.insert(std::make_pair(std::string("Class2"), fi));
-      m_factories.insert(std::make_pair(std::string("1"), fi));
-      m_factories.insert(std::make_pair(std::string("2"), fi));
-      */
 #ifdef WIN32
       const char* envVar = "PATH";
       const char sep = ';';
