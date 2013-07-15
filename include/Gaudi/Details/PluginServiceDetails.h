@@ -41,8 +41,16 @@ namespace Gaudi { namespace PluginService {
     /// In-memory database of the loaded factories.
     class Registry {
     public:
+      typedef std::string KeyType;
+
+      struct FactoryInfo {
+        FactoryInfo(const std::string& lib, void* p=0): library(lib), ptr(p) {}
+        std::string library;
+        void* ptr;
+      };
+
       /// Type used for the database implementation.
-      typedef std::map<std::string, void*> FactoryMap;
+      typedef std::map<KeyType, FactoryInfo> FactoryMap;
 
       /// Retrieve the singleton instance of Registry.
       static Registry& instance();
@@ -54,23 +62,20 @@ namespace Gaudi { namespace PluginService {
       void* get(const std::string& id) const;
 
       /// Return a list of all the known factories
-      std::set<FactoryMap::key_type> knownFactories() const;
+      std::set<KeyType> loadedFactories() const;
 
     private:
       /// Private constructor for the singleton pattern.
-      Registry() {}
+      /// At construction time, the internal database of known factories is
+      /// filled with the name of the libraries containing them, using the
+      /// ".factorylist" files in the LD_LIBRARY_PATH.
+      Registry();
 
-      /// Find the library providing a given factory and returns it's name.
-      std::string locate(const std::string& id) const;
+      /// Private copy constructor for the singleton pattern.
+      Registry(const Registry&) {}
 
       /// Internal storage for factories.
-      FactoryMap m_map;
-
-      /// List of libraries already loaded.
-      /// Needed to avoid infinite loops if a library declares to have a factory
-      /// but it is not true.
-      std::set<std::string> m_loadedLibs;
-
+      FactoryMap m_factories;
     };
   }
 }}

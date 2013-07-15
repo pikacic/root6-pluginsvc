@@ -10,13 +10,13 @@
 int main(int argc, char* argv[]) {
   Gaudi::PluginService::Details::Registry &reg =
       Gaudi::PluginService::Details::Registry::instance();
-  typedef Gaudi::PluginService::Details::Registry::FactoryMap::key_type key_type;
+  typedef Gaudi::PluginService::Details::Registry::KeyType key_type;
 
   // cache to keep track of the loaded factories
   std::map<key_type, std::string> loaded;
   {
     // initialize the local cache
-    std::set<key_type> base = reg.knownFactories();
+    std::set<key_type> base = reg.loadedFactories();
     for (std::set<key_type>::const_iterator f = base.begin(); f != base.end(); ++f)
     {
       loaded.insert(std::make_pair(*f, std::string("<preloaded>")));
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 
     if (dlopen(argv[i], RTLD_LAZY | RTLD_LOCAL)) {
 
-      std::set<key_type> factories = reg.knownFactories();
+      std::set<key_type> factories = reg.loadedFactories();
       std::set<key_type>::const_iterator f;
       for (f = factories.begin(); f != factories.end(); ++f) {
         if (loaded.find(*f) == loaded.end())

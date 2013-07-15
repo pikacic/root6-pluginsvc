@@ -23,49 +23,51 @@ namespace Gaudi { namespace PluginService {
       return r;
     }
 
+    Registry::Registry() {
+#warning "fake implementation for testing"
+      FactoryInfo fi("libComponent.so");
+      m_factories.insert(std::make_pair(std::string("Class1"), fi));
+      m_factories.insert(std::make_pair(std::string("Class2"), fi));
+      m_factories.insert(std::make_pair(std::string("1"), fi));
+      m_factories.insert(std::make_pair(std::string("2"), fi));
+    }
+
     void Registry::add(const std::string& id, void *factory){
-      m_map[id] = factory;
+      FactoryMap::iterator entry = m_factories.find(id);
+      if (entry == m_factories.end())
+      {
+        // this factory was not known yet
+        m_factories.insert(std::make_pair(id, FactoryInfo("unknown", factory)));
+      } else {
+        entry->second.ptr = factory;
+      }
     }
 
     void* Registry::get(const std::string& id) const {
-      FactoryMap::const_iterator f = m_map.find(id);
-      if (f != m_map.end())
+      FactoryMap::const_iterator f = m_factories.find(id);
+      if (f != m_factories.end())
       {
-        return f->second;
-      }
-      else
-      {
-        // see if we can find a library providing that id
-        std::string lib = locate(id);
-        if (!lib.empty() && m_loadedLibs.find(lib) == m_loadedLibs.end())
-        { // if there is one and we didn't load it yet, let's load it
-          if (dlopen(lib.c_str(), RTLD_NOW | RTLD_LOCAL)) {
-            // if we managed to load it, try again
-            const_cast<Registry*>(this)->m_loadedLibs.insert(lib);
-            return get(id);
-          }
-          else
-          {
-            // we could not load the library, so we give up
+        if (!f->second.ptr) {
+          if (!dlopen(f->second.library.c_str(), RTLD_NOW | RTLD_LOCAL)) {
             return 0;
           }
+          f = m_factories.find(id); // ensure that the iterator is valid
         }
+        return f->second.ptr;
       }
       return 0; // factory not found
     }
 
-    std::set<Registry::FactoryMap::key_type> Registry::knownFactories() const {
-      std::set<FactoryMap::key_type> l;
-      for (FactoryMap::const_iterator f = m_map.begin(); f != m_map.end(); ++f)
+    std::set<Registry::KeyType> Registry::loadedFactories() const {
+      std::set<KeyType> l;
+      for (FactoryMap::const_iterator f = m_factories.begin();
+           f != m_factories.end(); ++f)
       {
-        l.insert(f->first);
+        if (f->second.ptr)
+          l.insert(f->first);
       }
       return l;
     }
 
-    std::string Registry::locate(const std::string& id) const {
-#warning "fake implementation for testing"
-      return "libComponent.so";
-    }
   }
 }}
