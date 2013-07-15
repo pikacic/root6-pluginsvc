@@ -1,0 +1,11 @@
+CMakeFiles
+Makefile
+lib*.so
+*.components
+CMakeCache.txt
+cmake_install.cmake
+listcomponents
+testLoading
+.project
+.cproject
+.settings
