@@ -54,6 +54,15 @@ namespace Gaudi { namespace PluginService {
       return 0; // factory not found
     }
 
+    std::set<Registry::FactoryMap::key_type> Registry::knownFactories() const {
+      std::set<FactoryMap::key_type> l;
+      for (FactoryMap::const_iterator f = m_map.begin(); f != m_map.end(); ++f)
+      {
+        l.insert(f->first);
+      }
+      return l;
+    }
+
     std::string Registry::locate(const std::string& id) const {
 #warning "fake implementation for testing"
       return "libComponent.so";

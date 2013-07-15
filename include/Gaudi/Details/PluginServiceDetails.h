@@ -53,6 +53,9 @@ namespace Gaudi { namespace PluginService {
       /// Retrieve the factory for the given id.
       void* get(const std::string& id) const;
 
+      /// Return a list of all the known factories
+      std::set<FactoryMap::key_type> knownFactories() const;
+
     private:
       /// Private constructor for the singleton pattern.
       Registry() {}
