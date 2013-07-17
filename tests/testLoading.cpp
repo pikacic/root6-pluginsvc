@@ -24,6 +24,7 @@ void call(MyInterface *p) {
 
 int main(int argc, char ** argv)
 {
+  Gaudi::PluginService::Details::logger().setLevel(Gaudi::PluginService::Details::Logger::Debug);
 
   std::string A("A");
   std::string B("B");
