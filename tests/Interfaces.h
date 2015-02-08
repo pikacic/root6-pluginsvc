@@ -24,7 +24,7 @@ public:
 #include <Gaudi/PluginService.h>
 #include <string>
 
-typedef Gaudi::PluginService::Factory2<MyInterface*,
+typedef Gaudi::PluginService::Factory<MyInterface*,
                                        const std::string&, std::string*>
         MyFactory;
 

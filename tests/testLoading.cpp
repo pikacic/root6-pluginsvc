@@ -30,14 +30,14 @@ int main(int argc, char ** argv)
   std::string B("B");
 
   std::cout << "Looking for classes..." << std::endl;
-  std::auto_ptr<MyInterface> c1a( MyFactory::create("Class1", "c1a", &A) );
-  std::auto_ptr<MyInterface> c2a( MyFactory::create("Class2", "c2a", &B) );
+  auto c1a = std::unique_ptr<MyInterface>( MyFactory::create("Class1", "c1a", &A) );
+  auto c2a = std::unique_ptr<MyInterface>( MyFactory::create("Class2", "c2a", &B) );
   call(c1a.get());
   call(c2a.get());
 
   std::cout << "Looking for IDs..." << std::endl;
-  std::auto_ptr<MyInterface> c1b( MyFactory::create("1", "c1b", &B) );
-  std::auto_ptr<MyInterface> c2b( MyFactory::create("2", "c2b", &A) );
+  auto c1b = std::unique_ptr<MyInterface>( MyFactory::create("1", "c1b", &B) );
+  auto c2b = std::unique_ptr<MyInterface>( MyFactory::create("2", "c2b", &A) );
   call(c1b.get());
   call(c2b.get());
 
