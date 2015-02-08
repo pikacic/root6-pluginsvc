@@ -9,13 +9,17 @@
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
 
-# Author: Marco Clemencic <marco.clemencic@cern.ch>
+# Authors:
+#   Marco Clemencic <marco.clemencic@cern.ch>
+#   Benedikt Hegner <benedikt.hegner@cern.ch>
 
 cmake_minimum_required(VERSION 2.8)
 
 include_directories(include)
 
 set(CMAKE_BUILD_TYPE Release)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_library(PluginService SHARED src/PluginService.cpp)
 target_link_libraries(PluginService ${CMAKE_DL_LIBS})
@@ -35,3 +39,14 @@ target_link_libraries(Component PluginService)
 
 add_executable(testLoading tests/testLoading.cpp)
 target_link_libraries(testLoading PluginService)
+
+# add an optional target to generate API documentation with Doxygen
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+  add_custom_target(doc
+  ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  COMMENT "Generating API documentation with Doxygen" VERBATIM
+)
+endif(DOXYGEN_FOUND)
