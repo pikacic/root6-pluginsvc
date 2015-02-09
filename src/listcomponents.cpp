@@ -28,13 +28,15 @@ int main(int argc, char* argv[]) {
   auto loaded = reg.loadedFactories();
 
   // loop over the list of libraries passed on the command line
+  // and search for the not initially loaded ones
   for (int i = 1; i < argc; ++i) {
     if (dlopen(argv[i], RTLD_LAZY | RTLD_LOCAL)) {
       for(auto f : reg.loadedFactories() ){
         if (loaded.find(f) == loaded.end()) {
 	  std::cout << argv[i] << ":" << f << std::endl;
         } else {
-          std::cerr << "WARNING: factory '" << f << "already found previously" << std::endl; 
+          auto& info = reg.getInfo(f);
+          std::cerr << "WARNING: factory for '" << f << "already found in " << info.library << std::endl; 
         }
       }     
     } else {
