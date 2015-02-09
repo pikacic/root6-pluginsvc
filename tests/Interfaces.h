@@ -12,25 +12,19 @@
 \*****************************************************************************/
 
 /// @author Marco Clemencic <marco.clemencic@cern.ch>
+/// @author Benedikt Hegner <benedikt.hegner@cern.ch>
 
+#include <string>
+#include <Gaudi/PluginService.h>
 class MyInterface {
 public:
-   MyInterface() {}
-   virtual ~MyInterface() {}
+  typedef Gaudi::PluginService::Factory<MyInterface*, const std::string&, std::string*> Factory;
 
+   MyInterface() {}
+   MyInterface(const std::string&, std::string*) {}
+
+   virtual ~MyInterface() {}
    virtual void theMethod() const = 0;
 };
-
-#include <Gaudi/PluginService.h>
-#include <string>
-
-typedef Gaudi::PluginService::Factory<MyInterface*,
-                                       const std::string&, std::string*>
-        MyFactory;
-
-#define DECLARE_MY_FACTORY(type) \
-  DECLARE_FACTORY(type, MyFactory)
-#define DECLARE_MY_FACTORY_WITH_ID(type, id) \
-  DECLARE_FACTORY_WITH_ID(type, id, MyFactory)
 
 #endif
