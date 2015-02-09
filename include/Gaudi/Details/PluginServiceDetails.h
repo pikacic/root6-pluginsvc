@@ -109,14 +109,16 @@ namespace Gaudi { namespace PluginService {
 
       struct FactoryInfo {
         FactoryInfo(const std::string& lib, void* p=0,
+		    const std::string& id="",
                     const std::string& t="",
                     const std::string& rt="",
                     const std::string& cn="",
                     const Properties& props=Properties()):
-        library(lib), ptr(p), type(t), rtype(rt), className(cn), properties(props) {}
+        library(lib), ptr(p), id(id), type(t), rtype(rt), className(cn), properties(props) {}
 
         std::string library;
         void* ptr;
+	std::string id;
         std::string type;
         std::string rtype;
         std::string className;

@@ -10,6 +10,7 @@
 \*****************************************************************************/
 
 /// @author Marco Clemencic <marco.clemencic@cern.ch>
+/// @author Benedikt Hegner <benedikt.hegner@cern.ch>
 
 #include <Gaudi/PluginService.h>
 
@@ -199,17 +200,20 @@ namespace Gaudi { namespace PluginService {
                   // skip empty lines and lines starting with '#'
                   if (line.empty() || line[0] == '#') continue;
                   // look for the separator
-                  std::string::size_type pos = line.find(':');
-                  if (pos == std::string::npos) {
+                  std::string::size_type pos1 = line.find(':');
+		  std::string::size_type pos2 = line.find(':',pos1+1);
+                  if (pos2 == std::string::npos) {
                     std::ostringstream o;
                     o << "failed to parse line " << fullPath
                       << ':' << lineCount;
                     logger().warning(o.str());
                     continue;
                   }
-                  const std::string lib(line, 0, pos);
-                  const std::string fact(line, pos+1);
-                  m_factories.insert(std::make_pair(fact, FactoryInfo(lib)));
+		  const std::string interface(line, 0, pos1);
+                  const std::string lib(line, pos1+1, pos2-pos1-1);
+                  const std::string fact(line, pos2+1);
+		  logger().debug(std::string("    Inserting  ")+interface+":"+fact);
+                  m_factories.insert(std::make_pair(interface+":"+fact, FactoryInfo(lib,nullptr,fact,"",interface,"", Properties())));
 #ifdef GAUDI_REFLEX_COMPONENT_ALIASES
                   // add an alias for the factory using the Reflex convention
                   std::string old_name = old_style_name(fact);
@@ -241,12 +245,13 @@ namespace Gaudi { namespace PluginService {
                   const Properties& props){
       REG_SCOPE_LOCK
       FactoryMap &facts = factories();
-      FactoryMap::iterator entry = facts.find(id);
+      auto fullId = rtype+":"+id;
+      FactoryMap::iterator entry = facts.find(fullId);
       if (entry == facts.end())
       {
         // this factory was not known yet
-        entry = facts.insert(std::make_pair(id,
-                                            FactoryInfo("unknown", factory,
+        entry = facts.insert(std::make_pair(fullId,
+                                            FactoryInfo("unknown", factory, id,
                                                         type, rtype, className, props))).first;
       } else {
         // do not replace an existing factory with a new one
@@ -256,13 +261,14 @@ namespace Gaudi { namespace PluginService {
         factoryInfoSetHelper(entry->second.type, type, "type", id);
         factoryInfoSetHelper(entry->second.rtype, rtype, "return type", id);
         factoryInfoSetHelper(entry->second.className, className, "class", id);
+	factoryInfoSetHelper(entry->second.id, id, "alias", id);
       }
 #ifdef GAUDI_REFLEX_COMPONENT_ALIASES
       // add an alias for the factory using the Reflex convention
       std::string old_name = old_style_name(id);
       if (id != old_name)
-        add(old_name, factory, type, rtype, className, props)
-          .properties["ReflexName"] = "true";
+         add(old_name, factory, type, rtype, className, props)
+            .properties["ReflexName"] = "true";
 #endif
       return entry->second;
     }
@@ -270,6 +276,7 @@ namespace Gaudi { namespace PluginService {
     void* Registry::get(const std::string& id, const std::string& type) const {
       REG_SCOPE_LOCK
       const FactoryMap &facts = factories();
+
       FactoryMap::const_iterator f = facts.find(id);
       if (f != facts.end())
       {

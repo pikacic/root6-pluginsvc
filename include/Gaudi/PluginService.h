@@ -50,7 +50,8 @@ namespace Gaudi { namespace PluginService {
     typedef R (*FuncType)(Args&&...);
 
     static ReturnType create(const std::string& id, Args... args) {
-      const FuncType c = Details::getCreator<FuncType>(id);
+      auto fullId =  std::string(typeid(ReturnType).name())+":"+id;
+      const FuncType c = Details::getCreator<FuncType>(fullId);
       return c ? (*c)(std::forward<Args>(args)...) : 0;
     }
 
