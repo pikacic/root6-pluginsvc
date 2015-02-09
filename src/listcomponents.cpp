@@ -13,13 +13,33 @@
 /// @author Benedikt Hegner <benedikt.hegner@cern.ch>
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <set>
+#include <list>
+#include <memory>
 
 #include <getopt.h>
 #include <dlfcn.h>
 
 #include <Gaudi/PluginService.h>
+
+void help(std::string argv0) {
+  std::cout << "Usage: " << argv0 << " [option] library1 [library2 ...]\n"
+      "\n list the component factories present in the given libraries\n\n"
+      "Options:\n\n"
+      "  -h, --help       show this help message and exit\n"
+      "  -o OUTPUT, --output OUTPUT\n"
+      "                   write the list of factories on the file OUTPUT, use - for\n"
+      "                   standard output (default)\n"
+	    << std::endl;
+}
+
+void usage(std::string argv0) {
+  std::cout << "Usage: " << argv0 << " [option] library1 [library2 ...]\n"
+    "Try `" << argv0 << " -h' for more information.\n"
+	    << std::endl;
+}
 
 int main(int argc, char* argv[]) {
   auto& reg = Gaudi::PluginService::Details::Registry::instance();
@@ -27,20 +47,72 @@ int main(int argc, char* argv[]) {
   // cache to keep track of the loaded factories
   auto loaded = reg.loadedFactories();
 
+  // Parse command line
+  std::list<char*> libs;
+  std::string output_opt("-");
+  {
+    std::string argv0(argv[0]);
+    {
+      auto i = argv0.rfind('/');
+      if (i != std::string::npos)
+        argv0 = argv0.substr(i+1);
+    }
+
+    int i = 1;
+    while (i < argc) {
+      const std::string arg(argv[i]);
+      if (arg == "-o" || arg == "--output") {
+        if (++i < argc) {
+          output_opt = argv[i];
+        } else {
+	  std::cerr << "ERROR: missing argument for option " << arg << std::endl;
+	  std::cerr << "See `" << argv0 << " -h' for more details." << std::endl;
+          return EXIT_FAILURE;
+        }
+      } else if (arg == "-h" || arg == "--help") {
+        help(argv0);
+        return EXIT_SUCCESS;
+      } else {
+        libs.push_back(argv[i]);
+      }
+      ++i;
+    }
+    if (libs.empty()) {
+      usage(argv0);
+      return EXIT_FAILURE;
+    }
+  }
+
+  // handle output option
+  std::unique_ptr<std::ostream> output_file;
+  if (output_opt != "-") {
+    output_file = std::unique_ptr<std::ostream>(new std::ofstream(output_opt.c_str()));
+  }
+  std::ostream &output = (output_file ? *output_file : std::cout);
+
+  // if asked to dump all go through everything loaded already and dump it
+    if (false){
+     for(auto f : loaded){
+      auto& info = reg.getInfo(f);
+      output << info.library << ":" << f << std::endl;
+    }
+   return 0;
+  }
+
   // loop over the list of libraries passed on the command line
   // and search for the not initially loaded ones
-  for (int i = 1; i < argc; ++i) {
-    if (dlopen(argv[i], RTLD_LAZY | RTLD_LOCAL)) {
+  for (char* lib: libs) {
+    if (dlopen(lib, RTLD_LAZY | RTLD_LOCAL)) {
       for(auto f : reg.loadedFactories() ){
         if (loaded.find(f) == loaded.end()) {
-	  std::cout << argv[i] << ":" << f << std::endl;
+	  output << lib << ":" << f << std::endl;
         } else {
           auto& info = reg.getInfo(f);
           std::cerr << "WARNING: factory for '" << f << "already found in " << info.library << std::endl; 
         }
       }     
     } else {
-      std::cerr << "ERROR: failed to load " << argv[i] << std::endl;
+      std::cerr << "ERROR: failed to load " << lib << std::endl;
     }
   }
   return 0;
