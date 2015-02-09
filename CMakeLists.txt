@@ -50,3 +50,12 @@ if(DOXYGEN_FOUND)
   COMMENT "Generating API documentation with Doxygen" VERBATIM
 )
 endif(DOXYGEN_FOUND)
+
+# add optional tests depending on Boost
+find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+if(Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+  add_executable(UseCases tests/src/UseCases.cpp)
+  target_link_libraries(UseCases ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} PluginService)  
+endif(Boost_FOUND)
+
