@@ -4,7 +4,7 @@ PluginService
 Introduction
 ------------
 
-The Gaudi Plugin Service is a small tool to add to a C++ application the
+The Plugin Service is a small tool to add to a C++ application the
 possibility of dynamically instantiate (via _factories_) objects from classes
 defined in plug-in (or component) libraries.
 
@@ -29,7 +29,7 @@ write something like:
     #include <string>
     class Foo {
     public:
-      typedef Gaudi::PluginService::Factory1<Foo*, const std::string&> Factory;
+      typedef Gaudi::PluginService::Factory<Foo*, const std::string&> Factory;
 
       /// Constructor
       Foo(const std::string& name);
@@ -37,11 +37,9 @@ write something like:
       // ...
     };
 
-The templated class `Gaudi::PluginService::Factory1` takes as first template
-argument the return type of the factory and as second argument the type of the
-first argument of the factory function (with all the required qualifiers
-explicit).  There are several variants of the class for different number of
-arguments required by the constructor (`Factory0`, `Factory1`, `Factory2`, ...).
+The templated class `Gaudi::PluginService::Factory` takes as first template
+argument the return type of the factory and as following arguments the
+arguments required by the constructor of the factory.
 
 The plug-in class `Bar` defined in the dynamically loaded library will require
 a declaration to the Plugin Service to use it, so in the source file you have to
@@ -59,7 +57,7 @@ file with extension `.comonents` in a directory in the `LD_LIBRARY_PATH`.
 For example, if the `lib` directory contains `libBar.so` and it is specified in
 the `LD_LIBRARY_PATH`, you can call the commands:
 
-    listcomponents libBar.so >> lib/MyApp.components
+    listcomponents -o lib/MyApp.components libBar.so
 
 Note that the `.components` file does not need to be in the same directory as
 `libBar.so`.
