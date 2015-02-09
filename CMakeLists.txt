@@ -28,7 +28,7 @@ add_executable(listcomponents src/listcomponents.cpp src/PluginService.cpp)
 target_link_libraries(listcomponents ${CMAKE_DL_LIBS})
 
 add_custom_command(OUTPUT test.components
-                   COMMAND LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}
+                   COMMAND LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}:$ENV{LD_LIBRARY_PATH}
                            ${CMAKE_BINARY_DIR}/listcomponents
                              libComponent.so > test.components
                    DEPENDS Component listcomponents)
