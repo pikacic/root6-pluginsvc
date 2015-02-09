@@ -32,6 +32,8 @@ void help(std::string argv0) {
       "  -o OUTPUT, --output OUTPUT\n"
       "                   write the list of factories on the file OUTPUT, use - for\n"
       "                   standard output (default)\n"
+      "  -a, --all        write a list of all plugins found in\n"
+      "                   LD_LIBRARY_PATH to OUTPUT\n"
 	    << std::endl;
 }
 
@@ -42,10 +44,13 @@ void usage(std::string argv0) {
 }
 
 int main(int argc, char* argv[]) {
-  auto& reg = Gaudi::PluginService::Details::Registry::instance();
+  const auto& reg = Gaudi::PluginService::Details::Registry::instance();
 
   // cache to keep track of the loaded factories
   auto loaded = reg.loadedFactories();
+
+  // whether to dump all plugins found in LD_LIBRARY_PATH
+  bool dumpAll = false;
 
   // Parse command line
   std::list<char*> libs;
@@ -72,12 +77,14 @@ int main(int argc, char* argv[]) {
       } else if (arg == "-h" || arg == "--help") {
         help(argv0);
         return EXIT_SUCCESS;
+      } else if (arg == "-a" || arg == "--all") {
+        dumpAll = true;
       } else {
         libs.push_back(argv[i]);
       }
       ++i;
     }
-    if (libs.empty()) {
+    if (libs.empty() && dumpAll == false) {
       usage(argv0);
       return EXIT_FAILURE;
     }
@@ -91,10 +98,9 @@ int main(int argc, char* argv[]) {
   std::ostream &output = (output_file ? *output_file : std::cout);
 
   // if asked to dump all go through everything loaded already and dump it
-    if (false){
-     for(auto f : loaded){
-      auto& info = reg.getInfo(f);
-      output << info.library << ":" << f << std::endl;
+    if (dumpAll){
+      for(auto f : reg.factories()){
+        output << f.second.library << ":" << f.first << std::endl;
     }
    return 0;
   }
