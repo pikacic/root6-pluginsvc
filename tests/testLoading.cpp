@@ -26,12 +26,6 @@ int main(int argc, char ** argv)
 {
   Gaudi::PluginService::Details::logger().setLevel(Gaudi::PluginService::Details::Logger::Debug);
   const auto& registry = Gaudi::PluginService::Details::Registry::instance();
-  auto factories  = registry.factories(); 
-  for(auto i : factories ){
-    std::cout << i.first;
-    auto reg = i.second;
-    std::cout << reg.library << " : " << reg.className << std::endl;
-  }
   
   std::string A("A");
   std::string B("B");
