@@ -135,8 +135,7 @@ BOOST_AUTO_TEST_CASE( ids )
 BOOST_AUTO_TEST_CASE( properties )
 {
   using Gaudi::PluginService::Details::Registry;
-  Registry &reg = Registry::instance();
-  Registry::Properties props = reg.getInfo("Component1").properties;
-  
+  auto& reg = Registry::instance();
+  auto props = reg.getInfos("Component1")[0].properties;
   BOOST_CHECK(props["name"] == "Component1");
 }

@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
   for (char* lib: libs) {
     if (dlopen(lib, RTLD_LAZY | RTLD_LOCAL)) {
       for(auto f : reg.loadedFactories() ){
-	auto& info = reg.getInfo(f);
+	auto& info = reg.getInfoWithInterface(f);
         if (loaded.find(f) == loaded.end()) {
 	  output << lib << ":" << info.rtype << ":" << info.id << std::endl;
         } else {

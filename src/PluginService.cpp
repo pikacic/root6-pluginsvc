@@ -307,7 +307,7 @@ namespace Gaudi { namespace PluginService {
       return 0; // factory not found
     }
 
-    const Registry::FactoryInfo& Registry::getInfo(const std::string& id) const {
+    const Registry::FactoryInfo& Registry::getInfoWithInterface(const std::string& id) const {
       REG_SCOPE_LOCK
       static FactoryInfo unknown("unknown");
       const FactoryMap &facts = factories();
@@ -317,6 +317,19 @@ namespace Gaudi { namespace PluginService {
         return f->second;
       }
       return unknown; // factory not found
+    }
+
+    const std::vector<Registry::FactoryInfo> Registry::getInfos(const std::string& id) const {
+      REG_SCOPE_LOCK
+      auto& facts = factories();
+      std::vector<Registry::FactoryInfo> infos;
+      auto findById = [&id](const FactoryMap::value_type info){return info.second.id == id;};
+      auto it = std::find_if(std::begin(facts), std::end(facts), findById);
+      while (it != std::end(facts)) {
+	infos.emplace_back(it->second);
+	it = std::find_if(std::next(it), std::end(facts), findById);
+      }
+      return infos;
     }
 
     Registry&

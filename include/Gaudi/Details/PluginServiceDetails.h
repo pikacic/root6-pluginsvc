@@ -19,6 +19,7 @@
 #include <set>
 #include <typeinfo>
 #include <utility>
+#include <vector>
 
 #if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
 #include <mutex>
@@ -109,7 +110,7 @@ namespace Gaudi { namespace PluginService {
 
       struct FactoryInfo {
         FactoryInfo(const std::string& lib, void* p=0,
-		    const std::string& id="",
+                    const std::string& id="",
                     const std::string& t="",
                     const std::string& rt="",
                     const std::string& cn="",
@@ -151,8 +152,17 @@ namespace Gaudi { namespace PluginService {
       /// Retrieve the factory for the given id.
       void* get(const std::string& id, const std::string& type) const;
 
-      /// Retrieve the FactoryInfo object for an id.
-      const FactoryInfo& getInfo(const std::string& id) const;
+      /// Retrieve the FactoryInfo object for an id and an interface T.
+      template <typename T>
+      const FactoryInfo& getInfo(const std::string& id) const {
+        return getInfoWithInterface(std::string(typeid(T).name())+":"+id);
+      }
+
+      /// Retrieve the FactoryInfo object for the full id of "interface:id"
+      const FactoryInfo& getInfoWithInterface(const std::string& id) const;
+
+      /// Retrieve a vector of FactoryInfos matching the given id
+      const std::vector<FactoryInfo> getInfos(const std::string& id) const;
 
       /// Add a property to an already existing FactoryInfo object (via its id.)
       Registry&
