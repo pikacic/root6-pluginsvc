@@ -244,15 +244,15 @@ namespace Gaudi { namespace PluginService {
                   const std::string& className,
                   const Properties& props){
       REG_SCOPE_LOCK
-      FactoryMap &facts = factories();
-      auto fullId = rtype+":"+id;
-      FactoryMap::iterator entry = facts.find(fullId);
+      auto& facts = factories();
+      auto  fullId = rtype+":"+id;
+      auto  entry = facts.find(fullId);
       if (entry == facts.end())
       {
         // this factory was not known yet
         entry = facts.insert(std::make_pair(fullId,
                                             FactoryInfo("unknown", factory, id,
-                                                        type, rtype, className, props))).first;
+                                            type, rtype, className, props))).first;
       } else {
         // do not replace an existing factory with a new one
         if (!entry->second.ptr) {
@@ -275,9 +275,8 @@ namespace Gaudi { namespace PluginService {
 
     void* Registry::get(const std::string& id, const std::string& type) const {
       REG_SCOPE_LOCK
-      const FactoryMap &facts = factories();
-
-      FactoryMap::const_iterator f = facts.find(id);
+      const auto& facts = factories();
+      auto f = facts.find(id);
       if (f != facts.end())
       {
 #ifdef GAUDI_REFLEX_COMPONENT_ALIASES
@@ -309,9 +308,9 @@ namespace Gaudi { namespace PluginService {
 
     const Registry::FactoryInfo& Registry::getInfoWithInterface(const std::string& id) const {
       REG_SCOPE_LOCK
-      static FactoryInfo unknown("unknown");
-      const FactoryMap &facts = factories();
-      FactoryMap::const_iterator f = facts.find(id);
+      static auto unknown = FactoryInfo("unknown");
+      auto& facts = factories();
+      auto f = facts.find(id);
       if (f != facts.end())
       {
         return f->second;
@@ -337,8 +336,8 @@ namespace Gaudi { namespace PluginService {
                           const std::string& k,
                           const std::string& v) {
       REG_SCOPE_LOCK
-      FactoryMap &facts = factories();
-      FactoryMap::iterator f = facts.find(id);
+      auto& facts = factories();
+      auto f = facts.find(id);
       if (f != facts.end())
       {
         f->second.properties[k] = v;
@@ -348,7 +347,7 @@ namespace Gaudi { namespace PluginService {
 
     std::set<Registry::KeyType> Registry::loadedFactories() const {
       REG_SCOPE_LOCK
-      const FactoryMap &facts = factories();
+      const auto& facts = factories();
       std::set<KeyType> l;
       for (FactoryMap::const_iterator f = facts.begin();
            f != facts.end(); ++f)
