@@ -209,8 +209,8 @@ namespace Gaudi { namespace PluginService {
                     logger().warning(o.str());
                     continue;
                   }
-		  const std::string interface(line, 0, pos1);
-                  const std::string lib(line, pos1+1, pos2-pos1-1);
+		  const std::string lib(line, 0, pos1);
+                  const std::string interface(line, pos1+1, pos2-pos1-1);
                   const std::string fact(line, pos2+1);
 		  logger().debug(std::string("    Inserting  ")+interface+":"+fact);
                   m_factories.insert(std::make_pair(interface+":"+fact, FactoryInfo(lib,nullptr,fact,"",interface,"", Properties())));

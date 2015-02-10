@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
   // if asked to dump all go through everything loaded already and dump it
     if (dumpAll){
       for(auto f : reg.factories()){
-        output << f.second.rtype << ":"<<f.second.library << ":" << f.second.className << std::endl;
+        output << f.second.library << ":"<<f.second.rtype << ":" << f.second.className << std::endl;
     }
    return 0;
   }
@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
       for(auto f : reg.loadedFactories() ){
 	auto& info = reg.getInfo(f);
         if (loaded.find(f) == loaded.end()) {
-	  output << info.rtype << ":" << lib << ":" << info.id << std::endl;
+	  output << lib << ":" << info.rtype << ":" << info.id << std::endl;
         } else {
           std::cerr << "WARNING: factory for '" << f << "already found in " << info.library << std::endl; 
         }
