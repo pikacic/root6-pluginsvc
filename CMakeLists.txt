@@ -21,8 +21,8 @@ set(CMAKE_BUILD_TYPE Release)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-add_library(PluginService SHARED src/PluginService.cpp)
-target_link_libraries(PluginService ${CMAKE_DL_LIBS})
+add_library(HepPluginService SHARED src/PluginService.cpp src/capi_pluginservice.cpp)
+target_link_libraries(HepPluginService ${CMAKE_DL_LIBS})
 
 add_executable(listcomponents src/listcomponents.cpp src/PluginService.cpp)
 target_link_libraries(listcomponents ${CMAKE_DL_LIBS})
@@ -35,10 +35,10 @@ add_custom_command(OUTPUT test.components
 add_custom_target(ComponentsList ALL DEPENDS test.components)
 
 add_library(Component MODULE tests/testMacro.cpp)
-target_link_libraries(Component PluginService)
+target_link_libraries(Component HepPluginService)
 
 add_executable(testLoading tests/testLoading.cpp)
-target_link_libraries(testLoading PluginService)
+target_link_libraries(testLoading HepPluginService)
 
 # add an optional target to generate API documentation with Doxygen
 find_package(Doxygen)
@@ -56,6 +56,6 @@ find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
   add_executable(UseCases tests/src/UseCases.cpp)
-  target_link_libraries(UseCases ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} PluginService)  
+  target_link_libraries(UseCases ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} HepPluginService)
 endif(Boost_FOUND)
 
