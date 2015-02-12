@@ -10,6 +10,7 @@
 \*****************************************************************************/
 
 /// @author Marco Clemencic <marco.clemencic@cern.ch>
+/// @author Benedikt Hegner <benedikt.hegner@cern.ch>
 
 #include <Gaudi/PluginService.h>
 
@@ -23,6 +24,20 @@
 
 #include <cxxabi.h>
 #include <sys/stat.h>
+
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
+#define REG_SCOPE_LOCK \
+  std::lock_guard<std::recursive_mutex> _guard(m_mutex);
+
+namespace {
+  std::mutex registrySingletonMutex;
+}
+#define SINGLETON_LOCK \
+  std::lock_guard<std::mutex> _guard(::registrySingletonMutex);
+#else
+#define REG_SCOPE_LOCK
+#define SINGLETON_LOCK
+#endif
 
 // string trimming functions taken from
 // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
@@ -49,6 +64,9 @@ static inline std::string &trim(std::string &s) {
 }
 
 namespace {
+  /// Helper function used to set values in FactoryInfo data members only
+  /// if the original value is empty and reporting warnings in case of
+  /// inconsistencies.
   inline void factoryInfoSetHelper(std::string& dest, const std::string value,
                                    const std::string& desc,
                                    const std::string& id) {
@@ -60,6 +78,33 @@ namespace {
         << desc << ": " << dest << " != " << value;
       Gaudi::PluginService::Details::logger().warning(o.str());
     }
+  }
+
+  struct OldStyleCnv {
+    std::string name;
+    void operator() (const char c) {
+      switch(c) {
+      case '<':
+      case '>':
+      case ',':
+      case '(':
+      case ')':
+      case ':':
+      case '.':
+        name.push_back('_'); break;
+      case '&':
+        name.push_back('r'); break;
+      case '*':
+        name.push_back('p'); break;
+      case ' ': break;
+      default:
+        name.push_back(c); break;
+      }
+    }
+  };
+  /// Convert a class name in the string used with the Reflex plugin service
+  std::string old_style_name(const std::string& name) {
+    return std::for_each(name.begin(), name.end(), OldStyleCnv()).name;
   }
 }
 
@@ -76,7 +121,21 @@ namespace Gaudi { namespace PluginService {
       return Registry::instance().get(id, type);
     }
 
+    std::string demangle(const std::string& id) {
+      int   status;
+      char* realname;
+      realname = abi::__cxa_demangle(id.c_str(), 0, 0, &status);
+      if (realname == 0) return id;
+      std::string result(realname);
+      free(realname);
+      return result;
+    }
+    std::string demangle(const std::type_info& id) {
+      return demangle(id.name());
+    }
+
     Registry& Registry::instance() {
+      SINGLETON_LOCK
       static Registry r;
       return r;
     }
@@ -84,6 +143,8 @@ namespace Gaudi { namespace PluginService {
     Registry::Registry(): m_initialized(false) {}
 
     void Registry::initialize() {
+      REG_SCOPE_LOCK
+      if (m_initialized) return;
       m_initialized = true;
 #ifdef WIN32
       const char* envVar = "PATH";
@@ -110,7 +171,7 @@ namespace Gaudi { namespace PluginService {
             pos = newpos;
           }
           logger().debug(std::string(" looking into ") + dirName);
-          // look for files called "*.factories" in the directory
+          // look for files called "*.components" in the directory
           DIR *dir = opendir(dirName.c_str());
           if (dir) {
             struct dirent * entry;
@@ -139,17 +200,29 @@ namespace Gaudi { namespace PluginService {
                   // skip empty lines and lines starting with '#'
                   if (line.empty() || line[0] == '#') continue;
                   // look for the separator
-                  std::string::size_type pos = line.find(':');
-                  if (pos == std::string::npos) {
+                  std::string::size_type pos1 = line.find(':');
+		  std::string::size_type pos2 = line.find(':',pos1+1);
+                  if (pos2 == std::string::npos) {
                     std::ostringstream o;
                     o << "failed to parse line " << fullPath
                       << ':' << lineCount;
                     logger().warning(o.str());
                     continue;
                   }
-                  const std::string lib(line, 0, pos);
-                  const std::string fact(line, pos+1);
-                  m_factories.insert(std::make_pair(fact, FactoryInfo(lib)));
+		  const std::string lib(line, 0, pos1);
+                  const std::string interface(line, pos1+1, pos2-pos1-1);
+                  const std::string fact(line, pos2+1);
+		  logger().debug(std::string("    Inserting  ")+interface+":"+fact);
+                  m_factories.insert(std::make_pair(interface+":"+fact, FactoryInfo(lib,nullptr,fact,"",interface,"", Properties())));
+#ifdef GAUDI_REFLEX_COMPONENT_ALIASES
+                  // add an alias for the factory using the Reflex convention
+                  std::string old_name = old_style_name(fact);
+                  if (fact != old_name) {
+                    FactoryInfo old_info(lib);
+                    old_info.properties["ReflexName"] = "true";
+                    m_factories.insert(std::make_pair(old_name, old_info));
+                  }
+#endif
                   ++factoriesCount;
                 }
                 if (logger().level() <= Logger::Debug) {
@@ -165,34 +238,55 @@ namespace Gaudi { namespace PluginService {
       }
     }
 
-    void Registry::add(const std::string& id, void *factory,
-                       const std::string& type, const std::string& rtype,
-                       const std::string& className){
-      FactoryMap &facts = factories();
-      FactoryMap::iterator entry = facts.find(id);
+    Registry::FactoryInfo&
+    Registry::add(const std::string& id, void *factory,
+                  const std::string& type, const std::string& rtype,
+                  const std::string& className,
+                  const Properties& props){
+      REG_SCOPE_LOCK
+      auto& facts = factories();
+      auto  fullId = rtype+":"+id;
+      auto  entry = facts.find(fullId);
       if (entry == facts.end())
       {
         // this factory was not known yet
-        facts.insert(std::make_pair(id, FactoryInfo("unknown", factory,
-                                                    type, rtype, className)));
+        entry = facts.insert(std::make_pair(fullId,
+                                            FactoryInfo("unknown", factory, id,
+                                            type, rtype, className, props))).first;
       } else {
-        // do not replace an existing factory for a new one
+        // do not replace an existing factory with a new one
         if (!entry->second.ptr) {
           entry->second.ptr = factory;
         }
         factoryInfoSetHelper(entry->second.type, type, "type", id);
         factoryInfoSetHelper(entry->second.rtype, rtype, "return type", id);
         factoryInfoSetHelper(entry->second.className, className, "class", id);
+	factoryInfoSetHelper(entry->second.id, id, "alias", id);
       }
+#ifdef GAUDI_REFLEX_COMPONENT_ALIASES
+      // add an alias for the factory using the Reflex convention
+      std::string old_name = old_style_name(id);
+      if (id != old_name)
+         add(old_name, factory, type, rtype, className, props)
+            .properties["ReflexName"] = "true";
+#endif
+      return entry->second;
     }
 
     void* Registry::get(const std::string& id, const std::string& type) const {
-      const FactoryMap &facts = factories();
-      FactoryMap::const_iterator f = facts.find(id);
+      REG_SCOPE_LOCK
+      const auto& facts = factories();
+      auto f = facts.find(id);
       if (f != facts.end())
       {
+#ifdef GAUDI_REFLEX_COMPONENT_ALIASES
+        const Properties& props = f->second.properties;
+        if (props.find("ReflexName") != props.end())
+          logger().warning("requesting factory via old name '" + id + "'"
+                           "use '" + f->second.className + "' instead");
+#endif
         if (!f->second.ptr) {
-          if (!dlopen(f->second.library.c_str(), RTLD_NOW | RTLD_LOCAL)) {
+          if (!dlopen(f->second.library.c_str(), RTLD_LAZY | RTLD_GLOBAL)) {
             logger().warning("cannot load " + f->second.library +
                              " for factory " + id);
             char *dlmsg = dlerror();
@@ -202,19 +296,21 @@ namespace Gaudi { namespace PluginService {
           }
           f = facts.find(id); // ensure that the iterator is valid
         }
-        if (f->second.type == type)
+        if (f->second.type == type) {
           return f->second.ptr;
-        else
+        } else {
           logger().warning("found factory " + id + ", but of wrong type: " +
-                           f->second.type + " instead of " + type);
+              demangle(f->second.type) + " instead of " + demangle(type));
+        }
       }
       return 0; // factory not found
     }
 
-    const Registry::FactoryInfo& Registry::getInfo(const std::string& id) const {
-      static FactoryInfo unknown("unknown");
-      const FactoryMap &facts = factories();
-      FactoryMap::const_iterator f = facts.find(id);
+    const Registry::FactoryInfo& Registry::getInfoWithInterface(const std::string& id) const {
+      REG_SCOPE_LOCK
+      static auto unknown = FactoryInfo("unknown");
+      auto& facts = factories();
+      auto f = facts.find(id);
       if (f != facts.end())
       {
         return f->second;
@@ -222,25 +318,44 @@ namespace Gaudi { namespace PluginService {
       return unknown; // factory not found
     }
 
+    const std::vector<Registry::FactoryInfo> Registry::getInfos(const std::string& id) const {
+      REG_SCOPE_LOCK
+      auto& facts = factories();
+      std::vector<Registry::FactoryInfo> infos;
+      auto findById = [&id](const FactoryMap::value_type info){return info.second.id == id;};
+      auto it = std::find_if(std::begin(facts), std::end(facts), findById);
+      while (it != std::end(facts)) {
+	infos.emplace_back(it->second);
+	it = std::find_if(std::next(it), std::end(facts), findById);
+      }
+      return infos;
+    }
+
+    Registry&
+    Registry::addProperty(const std::string& id,
+                          const std::string& k,
+                          const std::string& v) {
+      REG_SCOPE_LOCK
+      auto& facts = factories();
+      auto f = facts.find(id);
+      if (f != facts.end())
+      {
+        f->second.properties[k] = v;
+      }
+      return *this;
+    }
+
     std::set<Registry::KeyType> Registry::loadedFactories() const {
+      REG_SCOPE_LOCK
+      const auto& facts = factories();
       std::set<KeyType> l;
-      for (FactoryMap::const_iterator f = m_factories.begin();
-           f != m_factories.end(); ++f)
+      for (FactoryMap::const_iterator f = facts.begin();
+           f != facts.end(); ++f)
       {
         if (f->second.ptr)
           l.insert(f->first);
       }
       return l;
-    }
-
-    std::string demangle(const std::type_info& id) {
-      int   status;
-      char* realname;
-      realname = abi::__cxa_demangle(id.name(), 0, 0, &status);
-      if (realname == 0) return id.name();
-      std::string result(realname);
-      free(realname);
-      return result;
     }
 
     void Logger::report(Level lvl, const std::string& msg) {
@@ -253,7 +368,7 @@ namespace Gaudi { namespace PluginService {
       }
     }
 
-    static std::auto_ptr<Logger> s_logger(new Logger);
+    static std::unique_ptr<Logger> s_logger(new Logger);
     Logger& logger() {
       return *s_logger;
     }
